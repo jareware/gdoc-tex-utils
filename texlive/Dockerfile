@@ -20,3 +20,7 @@ RUN ln -s /usr/local/texlive/*/bin/x86_64-linux/* /usr/local/bin/
 RUN tlmgr install \
     subfigure titlesec multirow lastpage etoolbox textpos hyphen-finnish \
     hyphen-swedish babel-finnish babel-swedish eurosym pgf ms xcolor
+
+RUN mkdir /workdir
+WORKDIR /workdir
+ENTRYPOINT ["pdflatex"]
