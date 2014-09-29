@@ -81,6 +81,7 @@ function unescapeHTML(text) {
         [ /&gt;/g,      '\\textgreater' ],
         [ /&lt;/g,      '\\textless' ],
         [ /&quot;/g,    '"' ],
+        [ /&rsquo;/g,   "'" ],
         [ /&#39;/g,     "'" ],
         [ /#/g,         '\\#']
     ].forEach(function(translation) {
