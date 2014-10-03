@@ -19,7 +19,7 @@ RUN ln -s /usr/local/texlive/*/bin/x86_64-linux/* /usr/local/bin/
 # Install a bunch of TeX Live packages (these will vary according to your needs)
 RUN tlmgr install \
     subfigure titlesec multirow lastpage etoolbox textpos hyphen-finnish \
-    hyphen-swedish babel-finnish babel-swedish eurosym pgf ms xcolor
+    hyphen-swedish babel-finnish babel-swedish eurosym pgf ms xcolor listings
 
 RUN mkdir /workdir
 WORKDIR /workdir
