@@ -23,4 +23,3 @@ RUN tlmgr install \
 
 RUN mkdir /workdir
 WORKDIR /workdir
-ENTRYPOINT ["pdflatex"]
