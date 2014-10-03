@@ -2,7 +2,7 @@ FROM dockerfile/nodejs
 
 WORKDIR /
 
-RUN npm install cheerio@0.17.0
+RUN npm install cheerio@0.8.1
 
 ADD gdochtml2tex.js /gdochtml2tex.js
 ADD cheerio-cli.js /cheerio-cli.js
