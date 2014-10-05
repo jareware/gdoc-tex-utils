@@ -1,16 +1,97 @@
 var cheerio = require('cheerio');
 var fs = require('fs');
 var html = fs.readFileSync('/dev/stdin', 'utf-8').toString();
-var $ = cheerio.load(html);
 
-var GOOGLE_URL_REDIR = /^https?:\/\/www\.google\.com\/url\?q=([^&]*).*$/;
+console.log(getLaTeX(html));
 
-//console.log(analyzeStyles($('head > style')));
+function getLaTeX(htmlString) {
 
-var tokens = tokenize($('body'), [], analyzeStyles($('head > style')));
+    var $ = cheerio.load(htmlString);
+    var cssClassMap = analyzeStyles($('head > style'));
+    var tokens = [];
 
-console.log(tokens);
-//console.log(tokens.join('\n'));
+    traverse($('body'));
+
+    return tokens.join('').replace(/\n +/g, '\n'); // remove any spaces immediately following newlines; they don't look nice
+
+    function emit(output) {
+        if (typeof output === 'string') {
+            tokens.push(output);
+        } else {
+            tokens.push(output.text().replace(/\s+/g, ' ')); // collapse any consecutive whitespace into spaces
+        }
+    }
+
+    function traverse($node) {
+
+        if (!$node.length) {
+            return; // nothing to do
+        } else if ($node.length > 1) { // this is a list of nodes...
+            return $node.each(function() {
+                traverse($(this)); // ...so visit each in turn
+            });
+        } else if ($node.hasClass('title')) {
+            emit('\n\\part{');
+            traverse($node.contents());
+            emit('}\n\n');
+        } else if ($node.get(0).name === 'h1') {
+            emit('\n\\chapter{');
+            traverse($node.contents());
+            emit('}\n\n');
+        } else if ($node.get(0).name === 'h2') {
+            emit('\n\\section{');
+            traverse($node.contents());
+            emit('}\n\n');
+        } else if ($node.get(0).name === 'h3') {
+            emit('\n\\subsection{');
+            traverse($node.contents());
+            emit('}\n\n');
+        } else if ($node.get(0).name === 'h4') {
+            emit('\n\\subsubsection{');
+            traverse($node.contents());
+            emit('}\n\n');
+        } else if ($node.get(0).name === 'a' && $node.attr('href')) {
+            emit('\\href{' + unGoogleHref($node.attr('href')) + '}{');
+            traverse($node.contents());
+            emit('}');
+        } else if ( // node is decorated with an "underline", "bold" etc modifier class
+            Object.keys(cssClassMap).map(function(key) {
+                return $node.hasClass(cssClassMap[key]);
+            }).indexOf(true) >= 0
+        ) {
+            var begins = Object.keys(cssClassMap).filter(function(key) {
+                return $node.hasClass(cssClassMap[key]);
+            }).map(function(key) {
+                return '\\' + key + '{';
+            });
+            var ends = begins.map(function() {
+                return '}';
+            });
+            begins.forEach(emit);
+            traverse($node.contents());
+            ends.forEach(emit);
+        } else if ($node.get(0).name === 'ul') {
+            emit('\n\\begin{itemize}\n');
+            $node.children('li').each(function() {
+                emit('\\item ');
+                traverse($(this));
+                emit('\n');
+            });
+            emit('\\end{itemize}\n\n');
+        } else if ($node.get(0).name === 'p') {
+            traverse($node.contents());
+            emit('\n');
+        } else if ($node.contents().length) { // this node has children/text nodes...
+            $node.contents().each(function() {
+                traverse($(this)); // ...so visit each in turn
+            });
+        } else { // this is a leaf node...
+            emit($node); // ...so allow it to emit text
+        }
+
+    }
+
+}
 
 function analyzeStyles($style) {
 
@@ -21,71 +102,16 @@ function analyzeStyles($style) {
     }
 
     return {
-        bold: extractClassName({ 'font-weight': 'bold' }),
-        italic: extractClassName({ 'font-style': 'italic' }),
+        textbf:    extractClassName({ 'font-weight': 'bold' }),
+        textit:    extractClassName({ 'font-style': 'italic' }),
         underline: extractClassName({ 'text-decoration': 'underline' }),
-        monospace: extractClassName({ 'font-family': '"?Courier New"?' })
+        texttt:    extractClassName({ 'font-family': '"?Courier New"?' })
     };
 
 }
 
-function tokenize($node, tokens, classMap) {
-
-    var end;
-
-    if ($node.length !== 1) {
-        throw new Error('tokenize() expects a singular cursor $node');
-    }
-
-    if ($node.hasClass('title')) {
-        tokens.push('\\part{');
-        end = '}';
-    } else if ($node.get(0).name === 'h1') {
-        tokens.push('\\chapter{');
-        end = '}';
-    } else if ($node.get(0).name === 'h2') {
-        tokens.push('\\section{');
-        end = '}';
-    } else if ($node.get(0).name === 'h3') {
-        tokens.push('\\subsection{');
-        end = '}';
-    } else if ($node.get(0).name === 'h4') {
-        tokens.push('\\subsubsection{');
-        end = '}';
-    } else if ($node.get(0).name === 'a' && $node.attr('href')) {
-        tokens.push('\\href{' + unGoogleHref($node.attr('href')) + '}{');
-        end = '}';
-    } else if ($node.hasClass(classMap.bold)) {
-        tokens.push('\\textbf{');
-        end = '}';
-    } else if ($node.hasClass(classMap.italic)) {
-        tokens.push('\\emph{'); // or \textit
-        end = '}';
-    } else if ($node.hasClass(classMap.underline)) {
-        tokens.push('\\underline{');
-        end = '}';
-    } else if ($node.hasClass(classMap.bold)) {
-        tokens.push('\\textbf{');
-        end = '}';
-    }
-
-    if ($node.children().length === 0) { // leaf nodes contribute text
-        tokens.push($node.text().replace(/[\s]+/g, ' ').trim());
-    } else { // nodes with children are recursed
-        $node.children().each(function() {
-            tokenize($(this), tokens, classMap);
-        });
-    }
-
-    if (end) {
-        tokens.push(end);
-    }
-
-    return tokens;
-
-}
-
 function unGoogleHref(input) {
+    var GOOGLE_URL_REDIR = /^https?:\/\/www\.google\.com\/url\?q=([^&]*).*$/;
     if (input.match(GOOGLE_URL_REDIR)) {
         return decodeURIComponent(input.replace(GOOGLE_URL_REDIR, '$1'));
     } else {
