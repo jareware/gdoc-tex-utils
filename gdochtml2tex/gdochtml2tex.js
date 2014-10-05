@@ -12,7 +12,7 @@ function getLaTeX(htmlString) {
 
     traverse($('body'));
 
-    return tokens.join('').replace(/\n +/g, '\n'); // remove any spaces immediately following newlines; they don't look nice
+    return cleanUpTeX(tokens.join(''));
 
     function emit(output) {
         if (typeof output === 'string') {
@@ -31,9 +31,12 @@ function getLaTeX(htmlString) {
                 traverse($(this)); // ...so visit each in turn
             });
         } else if ($node.hasClass('title')) {
+            // For now, silently ignore "title"s, as the doc title will most likely be defined somewhere in main.tex
+            /*
             emit('\n\\part{');
             traverse($node.contents());
             emit('}\n\n');
+            */
         } else if ($node.get(0).name === 'h1') {
             emit('\n\\chapter{');
             traverse($node.contents());
@@ -51,9 +54,11 @@ function getLaTeX(htmlString) {
             traverse($node.contents());
             emit('}\n\n');
         } else if ($node.get(0).name === 'a' && $node.attr('href')) {
-            emit('\\href{' + unGoogleHref($node.attr('href')) + '}{');
-            traverse($node.contents());
-            emit('}');
+            if (!$node.attr('href').match(/^#/)) {
+                emit('\\href{' + unGoogleHref($node.attr('href')) + '}{');
+                traverse($node.contents());
+                emit('}');
+            }
         } else if ( // node is decorated with an "underline", "bold" etc modifier class
             Object.keys(cssClassMap).map(function(key) {
                 return $node.hasClass(cssClassMap[key]);
@@ -78,6 +83,8 @@ function getLaTeX(htmlString) {
                 emit('\n');
             });
             emit('\\end{itemize}\n\n');
+        } else if ($node.get(0).name === 'sup') {
+            // For now, suppress any superscripts, as Google Docs uses those to represent comments (which we want to ignore)
         } else if ($node.get(0).name === 'p') {
             traverse($node.contents());
             emit('\n');
@@ -91,6 +98,21 @@ function getLaTeX(htmlString) {
 
     }
 
+}
+
+function cleanUpTeX(texString) {
+    var replace = [
+        /’/g,       "'",
+        /“/g,       '``',
+        /”/g,       "''",
+        /([&#_])/g, '\\$1',
+        /\n +/g,    '\n', // remove any spaces immediately following newlines; they don't look nice
+        /\n{3,}/g,  '\n\n' // two consecutive newlines ought to be enough for everyone
+    ];
+    for (var i = 0; i < replace.length; i += 2) {
+        texString = texString.replace(replace[i], replace[i + 1]);
+    }
+    return texString.trim() + '\n';
 }
 
 function analyzeStyles($style) {
