@@ -54,6 +54,8 @@ function getLaTeX(htmlString) {
             emit('\n\\subsubsection{');
             traverse($node.contents());
             emit('}\n\n');
+        } else if ($node.get(0).name === 'br') {
+            emit('\\newline\n');
         } else if ($node.get(0).name === 'a' && $node.attr('href')) {
             if (!$node.attr('href').match(/^#/)) {
                 emit('\\href{' + unGoogleHref($node.attr('href')) + '}{');
