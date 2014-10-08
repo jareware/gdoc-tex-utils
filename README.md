@@ -22,3 +22,17 @@ $ curl -s "https://docs.google.com/document/d/1gHkEYatbgVbri5S3QBqCXtK80IiGHRBm5
 $ docker run -v $(pwd)/sample:/workdir --rm texlive pdflatex main.tex
 $ open sample/main.pdf
 ```
+
+Notable alternatives
+--------------------
+
+Services:
+
+ 1. https://www.sharelatex.com/ (by far the most useful-looking)
+ 1. http://tex.uncg.edu/login.php
+ 1. https://code.google.com/p/latex-lab/
+ 1. http://www.sci.usq.edu.au/research/googledocs.php
+
+Converters:
+
+ 1. https://code.google.com/p/googledoc2latex/wiki/Usage
