@@ -78,6 +78,14 @@ function getLaTeX(htmlString) {
             begins.forEach(emit);
             traverse($node.contents());
             ends.forEach(emit);
+        } else if ($node.get(0).name === 'ol') {
+            emit('\n\\begin{enumerate}\n');
+            $node.children('li').each(function() {
+                emit('\\item ');
+                traverse($(this));
+                emit('\n');
+            });
+            emit('\\end{enumerate}\n\n');
         } else if ($node.get(0).name === 'ul') {
             emit('\n\\begin{itemize}\n');
             $node.children('li').each(function() {
