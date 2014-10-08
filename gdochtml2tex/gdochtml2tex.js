@@ -8,9 +8,10 @@ function getLaTeX(htmlString) {
 
     var $ = cheerio.load(htmlString);
     var cssClassMap = analyzeStyles($('head > style'));
+    var footnoteMap = analyzeFootnotes($, $('body > hr ~ *')); // things after a <hr> are comments/footnotes
     var tokens = [];
 
-    traverse($('body'));
+    traverse($('body > *:not(div)')); // ignore any immediate <div> children, as they've been handled by analyzeFootnotes()
 
     return cleanUpTeX(tokens.join(''));
 
@@ -84,7 +85,16 @@ function getLaTeX(htmlString) {
             });
             emit('\\end{itemize}\n\n');
         } else if ($node.get(0).name === 'sup') {
-            // For now, suppress any superscripts, as Google Docs uses those to represent comments (which we want to ignore)
+            if (
+                $node.children().length === 1 &&
+                $node.children('a').length === 1 &&
+                footnoteMap[$node.find('a').attr('href')]
+            ) {
+                emit('\\footnote{');
+                traverse(footnoteMap[$node.find('a').attr('href')]);
+                emit('}');
+            }
+            // Since we found a <sup> which wasn't a footnote, it's likely a GDocs comment, which we don't want to render -> suppress
         } else if ($node.get(0).name === 'p') {
             traverse($node.contents());
             emit('\n');
@@ -129,6 +139,20 @@ function analyzeStyles($style) {
         underline: extractClassName({ 'text-decoration': 'underline' }),
         texttt:    extractClassName({ 'font-family': '"?Courier New"?' })
     };
+
+}
+
+function analyzeFootnotes($, $footnotes) {
+
+    var map = {};
+
+    $footnotes.find('a').each(function() {
+        if (($(this).attr('name') || '').match(/^ftnt/)) {
+            map['#' + $(this).attr('name')] = $(this).nextAll();
+        }
+    });
+
+    return map;
 
 }
 
