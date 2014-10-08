@@ -125,7 +125,8 @@ function cleanUpTeX(texString) {
         /’/g,       "'",
         /“/g,       '``',
         /”/g,       "''",
-        /([&#_])/g, '\\$1',
+        /—/g,       "--",
+        /([$&#_])/g,'\\$1', // escape some special chars which are problematic
         /\n +/g,    '\n', // remove any spaces immediately following newlines; they don't look nice
         /\n{3,}/g,  '\n\n' // two consecutive newlines ought to be enough for everyone
     ];
