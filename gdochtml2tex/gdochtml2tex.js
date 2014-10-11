@@ -41,23 +41,25 @@ function getLaTeX(htmlString) {
         } else if ($node.get(0).name === 'h1') {
             emit('\n\\chapter{');
             traverse($node.contents());
-            emit('}\n\n');
+            emit('}\n\\label{' + $node.find('> a').attr('name') + '}\n\n');
         } else if ($node.get(0).name === 'h2') {
             emit('\n\\section{');
             traverse($node.contents());
-            emit('}\n\n');
+            emit('}\n\\label{' + $node.find('> a').attr('name') + '}\n\n');
         } else if ($node.get(0).name === 'h3') {
             emit('\n\\subsection{');
             traverse($node.contents());
-            emit('}\n\n');
+            emit('}\n\\label{' + $node.find('> a').attr('name') + '}\n\n');
         } else if ($node.get(0).name === 'h4') {
             emit('\n\\subsubsection{');
             traverse($node.contents());
-            emit('}\n\n');
+            emit('}\n\\label{' + $node.find('> a').attr('name') + '}\n\n');
         } else if ($node.get(0).name === 'br') {
             emit('\\newline\n');
         } else if ($node.get(0).name === 'a' && $node.attr('href')) {
-            if (!$node.attr('href').match(/^#/)) {
+            if ($node.attr('href').match(/^#/)) { // document internal link (e.g. reference)
+                emit('\\nameref{' + $node.attr('href').replace(/^#/, '') + '}');
+            } else { // external link
                 emit('\\href{' + unGoogleHref($node.attr('href')) + '}{');
                 traverse($node.contents());
                 emit('}');
