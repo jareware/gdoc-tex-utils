@@ -57,7 +57,9 @@ function getLaTeX(htmlString) {
         } else if ($node.get(0).name === 'br') {
             emit('\\newline\n');
         } else if ($node.get(0).name === 'a' && $node.attr('href')) {
-            if ($node.attr('href').match(/^#/)) { // document internal link (e.g. reference)
+            if (($node.attr('name') || '').match(/^id\./)) { // bookmark (the mark itself, not a reference to it)
+                // TODO: Add support..?
+            } else if ($node.attr('href').match(/^#/)) { // document internal link (e.g. reference)
                 emit('\\nameref{' + $node.attr('href').replace(/^#/, '') + '}');
             } else { // external link
                 emit('\\href{' + unGoogleHref($node.attr('href')) + '}{');
