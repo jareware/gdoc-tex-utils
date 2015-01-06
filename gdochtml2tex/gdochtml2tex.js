@@ -122,6 +122,11 @@ function getLaTeX(htmlString) {
 
     }
 
+    // TODO: $ becomes \$ inside a "lstlisting" environment
+    // So does #
+
+    // TODO: Heading link support
+
 }
 
 function cleanUpTeX(texString) {
