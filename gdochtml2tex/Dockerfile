@@ -1,4 +1,5 @@
-FROM dockerfile/nodejs
+FROM node:0.10.35
+# https://registry.hub.docker.com/_/node/
 
 WORKDIR /
 
