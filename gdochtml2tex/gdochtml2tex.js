@@ -60,6 +60,7 @@ function getLaTeX(htmlString) {
             if (($node.attr('name') || '').match(/^id\./)) { // bookmark (the mark itself, not a reference to it)
                 // TODO: Add support..?
             } else if ($node.attr('href').match(/^#/)) { // document internal link (e.g. reference)
+                // Note: You can also use e.g. \fullref as long as it's defined somewhere (as in http://tex.stackexchange.com/a/121871)
                 emit('\\nameref{' + $node.attr('href').replace(/^#/, '') + '}');
             } else { // external link
                 emit('\\href{' + unGoogleHref($node.attr('href')) + '}{');
