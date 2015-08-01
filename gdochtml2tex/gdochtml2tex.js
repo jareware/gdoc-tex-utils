@@ -123,14 +123,12 @@ function getLaTeX(htmlString) {
 
     }
 
-    // TODO: $ becomes \$ inside a "lstlisting" environment
-    // So does #
-
     // TODO: Heading link support
 
 }
 
 function cleanUpTeX(texString) {
+    var LISTING = /\\begin\{lstlisting\}(?:\[.*?\])([\s\S]*?)\\end\{lstlisting\}/g;
     var replace = [
         /’/g,       "'",
         /“/g,       '``',
@@ -143,6 +141,9 @@ function cleanUpTeX(texString) {
     for (var i = 0; i < replace.length; i += 2) {
         texString = texString.replace(replace[i], replace[i + 1]);
     }
+    texString = texString.replace(LISTING, function(env, content) { // within a lstlisting environment, undo some escapes (such as \$) which aren't wanted
+        return env.replace(content, content.replace(/\\([#$])/g, '$1'));
+    });
     return texString.trim() + '\n';
 }
 
